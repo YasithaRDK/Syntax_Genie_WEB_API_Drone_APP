@@ -5,14 +5,17 @@ const DroneSchema = new mongoose.Schema({
     type: String,
     maxLength: 100,
     unique: true,
+    required: true,
   },
   model: {
     type: String,
     enum: ["Lightweight", "Middleweight", "Cruiserweight", "Heavyweight"],
+    required: true,
   },
   weightLimit: {
     type: Number,
     max: 500,
+    required: true,
   },
   batteryCapacity: {
     type: Number,
