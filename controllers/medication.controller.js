@@ -14,7 +14,7 @@ export const registerMedication = async (req, res) => {
 
     const newMedication = new Medication({ name, weight, code, image });
     await newMedication.save();
-    res.json(newMedication);
+    res.status(200).json({ message: "Medication added successfully" });
   } catch (error) {
     if (req.file) {
       const imagePath = path.join(__dirname, "..", req.file.path);

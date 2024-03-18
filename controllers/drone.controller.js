@@ -1,6 +1,6 @@
 import Medication from "../models/medication.model.js";
 import Drone from "../models/drone.model.js";
-import LoadedMedication from "../models/loadedMedication.model.js";
+import DroneMedication from "../models/droneMedication.model.js";
 import mongoose from "mongoose";
 
 /**registering a drone */
@@ -16,8 +16,9 @@ export const registerDrone = async (req, res) => {
       state,
     });
     await newDrone.save();
-    res.status(201).json("");
+    res.status(200).json({ message: "Drone registered successfully" });
   } catch (error) {
+    //customize duplication error message
     if (error.code === 11000) {
       return res.status(400).json({ message: "Serial number already exists." });
     }
@@ -28,7 +29,9 @@ export const registerDrone = async (req, res) => {
 /**checking available drones for loading */
 export const availableDrones = async (req, res) => {
   try {
-    const drones = await Drone.find({ state: { $in: ["LOADING", "IDLE"] } });
+    const drones = await Drone.find({
+      state: { $in: ["LOADING", "IDLE"] },
+    }).select("-createdAt -updatedAt -__v");
     res.status(200).json(drones);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -37,10 +40,10 @@ export const availableDrones = async (req, res) => {
 
 /**loading a drone with medication items */
 export const loadMedicationsForDrone = async (req, res) => {
-  try {
-    const { drone_id } = req.params;
-    const { medication_id } = req.body;
+  const { drone_id } = req.params;
+  const { medication_id, quantity } = req.body;
 
+  try {
     // Check if drone and medication exist
     const drone = await Drone.findById(drone_id);
     const medication = await Medication.findById(medication_id);
@@ -53,41 +56,72 @@ export const loadMedicationsForDrone = async (req, res) => {
       return res.status(404).json({ message: "Medication does not exist" });
     }
 
-    // Check if drone is available and has sufficient battery level
+    // Check if drone is available
     if (drone.batteryCapacity < 25) {
       return res.status(400).json({ message: "Battery level is below 25%" });
     }
 
     if (drone.state !== "LOADING" && drone.state !== "IDLE") {
       return res.status(400).json({
-        message: "Drone not available for load medications right now",
+        message: "Drone not available for load medications",
       });
     }
 
-    if (drone.state === "LOADING") {
-    }
-
     // Check weight limit
-    if (medication.weight > drone.availableLimit) {
-      return res.status(400).json({ message: "Weight exceeds drone limit" });
+    const totalWeightResult = await DroneMedication.aggregate([
+      {
+        $match: {
+          $and: [
+            { drone_id: new mongoose.Types.ObjectId(drone_id) },
+            { state: "Active" },
+          ],
+        },
+      },
+      {
+        $lookup: {
+          from: "medications",
+          localField: "medication_id",
+          foreignField: "_id",
+          as: "medicationInfo",
+        },
+      },
+      { $unwind: "$medicationInfo" },
+      {
+        $group: {
+          _id: null,
+          totalWeight: {
+            $sum: { $multiply: ["$medicationInfo.weight", "$quantity"] },
+          },
+        },
+      },
+    ]);
+
+    const totalWeight = totalWeightResult[0]
+      ? totalWeightResult[0].totalWeight
+      : 0;
+
+    // Check if the drone can carry the additional weight
+    const newWeight = totalWeight + medication.weight * quantity;
+    if (newWeight > drone.weightLimit) {
+      return res
+        .status(400)
+        .json({ message: "Cannot load medication. Exceeds weight limit." });
     }
 
-    // Update drone state if weight is within or equal to limit
-    if (medication.weight < drone.availableLimit) {
-      const newAvailable = drone.availableLimit - medication.weight;
-      drone.availableLimit = newAvailable;
+    //Update drone state if weight is within or equal to limit
+    if (newWeight < drone.weightLimit) {
       drone.state = "LOADING";
       await drone.save();
-    } else if (medication.weight === drone.availableLimit) {
-      drone.availableLimit = 0;
+    } else if (newWeight === drone.weightLimit) {
       drone.state = "LOADED";
       await drone.save();
     }
 
     // Load medication onto the drone
-    const newLoadedMedication = new LoadedMedication({
+    const newLoadedMedication = new DroneMedication({
       drone_id,
       medication_id,
+      quantity,
     });
     await newLoadedMedication.save();
 
@@ -101,16 +135,60 @@ export const loadMedicationsForDrone = async (req, res) => {
 export const getMedicationsForDrone = async (req, res) => {
   const { drone_id } = req.params;
   try {
-    // Find all loaded medications associated with the given droneId
-    const loadedMedications = await LoadedMedication.find({
-      drone_id: drone_id,
-    }).populate("medication_id");
+    //Check drone id is valid
+    const drone = await Drone.findById(drone_id);
 
-    if (!loadedMedications) {
-      return res.status(404).json({ message: "No loaded medications founded" });
+    if (!drone) {
+      return res.status(404).json({ message: "Drone does not exist" });
     }
 
-    res.status(200).json(loadedMedications[0]);
+    //Get medication details according to drone id
+    const loadedMedications = await DroneMedication.aggregate([
+      {
+        $match: { drone_id: new mongoose.Types.ObjectId(drone_id) },
+      },
+      {
+        $lookup: {
+          from: "medications",
+          localField: "medication_id",
+          foreignField: "_id",
+          as: "medicationDetails",
+        },
+      },
+      {
+        $unwind: "$medicationDetails",
+      },
+      {
+        $project: {
+          _id: "$medicationDetails._id",
+          name: "$medicationDetails.name",
+          weight: "$medicationDetails.weight",
+          code: "$medicationDetails.code",
+          image: "$medicationDetails.image",
+        },
+      },
+    ]);
+
+    if (!loadedMedications || loadedMedications.length === 0) {
+      return res.status(404).json({ message: "No loaded medications found" });
+    }
+
+    res.status(200).json(loadedMedications);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+/**check drone battery level for a given drone */
+export const batteryLevel = async (req, res) => {
+  const { drone_id } = req.params;
+  try {
+    const drone = await Drone.findById(drone_id);
+
+    if (!drone) {
+      return res.status(404).json({ message: "Drone does not exist" });
+    }
+    res.json({ batteryLevel: drone.batteryCapacity });
   } catch (error) {
     res.status(400).json({ message: error.message });
   }

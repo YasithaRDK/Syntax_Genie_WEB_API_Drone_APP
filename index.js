@@ -5,7 +5,6 @@ import connectDb from "./config/db.config.js";
 import errorHandler from "./middlewares/error.middleware.js";
 import droneRouter from "./routes/drone.routes.js";
 import medicationRouter from "./routes/medication.routes.js";
-import loadMedicationRouter from "./routes/loadedMedication.routes.js";
 
 dotenv.config();
 
@@ -19,7 +18,6 @@ app.use("/uploads", express.static("uploads"));
 
 app.use("/api/drones", droneRouter);
 app.use("/api/medications", medicationRouter);
-app.use("/api/load-medic", loadMedicationRouter);
 
 app.use(errorHandler);
 
