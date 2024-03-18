@@ -1,19 +1,19 @@
 import mongoose from "mongoose";
 
 const LoadedMedicationSchema = new mongoose.Schema({
-  quantity: {
-    type: Number,
-    required: true,
-  },
-  drone: {
+  drone_id: {
     type: mongoose.Types.ObjectId,
     ref: "Drone",
     required: true,
   },
-  medication: {
+  medication_id: {
     type: mongoose.Types.ObjectId,
     ref: "Medication",
     required: true,
+  },
+  quantity: {
+    type: Number,
+    default: 1,
   },
 });
 

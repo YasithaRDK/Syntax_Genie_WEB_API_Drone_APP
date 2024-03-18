@@ -1,17 +1,18 @@
-import { fileURLToPath } from "url";
 import path, { dirname } from "path";
 import fs from "fs";
+import { fileURLToPath } from "url";
 import Medication from "../models/medication.model.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+//Register medication
 export const registerMedication = async (req, res) => {
   try {
     const { name, weight, code } = req.body;
     const image = req.file ? req.file.path : null;
 
-    const newMedication = Medication({ name, weight, code, image });
+    const newMedication = new Medication({ name, weight, code, image });
     await newMedication.save();
     res.json(newMedication);
   } catch (error) {

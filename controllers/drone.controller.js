@@ -1,5 +1,6 @@
 import Drone from "../models/drone.model.js";
 
+//Register drone
 export const registerDrone = async (req, res) => {
   try {
     const { serialNumber, model, weightLimit, batteryCapacity, state } =
@@ -19,4 +20,10 @@ export const registerDrone = async (req, res) => {
     }
     res.status(400).json({ message: error.message });
   }
+};
+
+//Show available drones
+export const availableDrones = async (req, res) => {
+  const drones = await Drone.find({ state: { $in: ["LOADING", "IDLE"] } });
+  res.status(200).json(drones);
 };
