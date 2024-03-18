@@ -1,8 +1,9 @@
 import Medication from "../models/medication.model.js";
 import Drone from "../models/drone.model.js";
 import LoadedMedication from "../models/loadedMedication.model.js";
+import mongoose from "mongoose";
 
-//Register drone
+/**registering a drone */
 export const registerDrone = async (req, res) => {
   try {
     const { serialNumber, model, weightLimit, batteryCapacity, state } =
@@ -15,7 +16,7 @@ export const registerDrone = async (req, res) => {
       state,
     });
     await newDrone.save();
-    res.status(201).json(newDrone);
+    res.status(201).json("");
   } catch (error) {
     if (error.code === 11000) {
       return res.status(400).json({ message: "Serial number already exists." });
@@ -24,14 +25,18 @@ export const registerDrone = async (req, res) => {
   }
 };
 
-//Show available drones
+/**checking available drones for loading */
 export const availableDrones = async (req, res) => {
-  const drones = await Drone.find({ state: { $in: ["LOADING", "IDLE"] } });
-  res.status(200).json(drones);
+  try {
+    const drones = await Drone.find({ state: { $in: ["LOADING", "IDLE"] } });
+    res.status(200).json(drones);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
 };
 
-//Load medication for drone
-export const loadMedications = async (req, res) => {
+/**loading a drone with medication items */
+export const loadMedicationsForDrone = async (req, res) => {
   try {
     const { drone_id } = req.params;
     const { medication_id } = req.body;
@@ -54,11 +59,9 @@ export const loadMedications = async (req, res) => {
     }
 
     if (drone.state !== "LOADING" && drone.state !== "IDLE") {
-      return res
-        .status(400)
-        .json({
-          message: "Drone not available for load medications right now",
-        });
+      return res.status(400).json({
+        message: "Drone not available for load medications right now",
+      });
     }
 
     if (drone.state === "LOADING") {
@@ -89,6 +92,25 @@ export const loadMedications = async (req, res) => {
     await newLoadedMedication.save();
 
     res.status(200).json({ message: "Medication loaded successfully" });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+/**checking loaded medication items for a given drone */
+export const getMedicationsForDrone = async (req, res) => {
+  const { drone_id } = req.params;
+  try {
+    // Find all loaded medications associated with the given droneId
+    const loadedMedications = await LoadedMedication.find({
+      drone_id: drone_id,
+    }).populate("medication_id");
+
+    if (!loadedMedications) {
+      return res.status(404).json({ message: "No loaded medications founded" });
+    }
+
+    res.status(200).json(loadedMedications[0]);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }

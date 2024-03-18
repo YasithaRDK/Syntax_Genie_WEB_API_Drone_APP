@@ -6,7 +6,7 @@ import Medication from "../models/medication.model.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-//Register medication
+/**registering medications */
 export const registerMedication = async (req, res) => {
   try {
     const { name, weight, code } = req.body;
