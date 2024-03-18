@@ -4,7 +4,7 @@ import LoadedMedication from "../models/loadedMedication.model.js";
 
 export const loadMedication = async (req, res) => {
   try {
-    const { drone_id, medication_id, quantity } = req.body;
+    const { drone_id, medication_id } = req.body;
 
     // Check if drone and medication exist
     const drone = await Drone.findById(drone_id);
@@ -27,32 +27,32 @@ export const loadMedication = async (req, res) => {
       return res.status(400).json({ message: "Drone not available right now" });
     }
 
-    // Calculate total weight of medication to be loaded
-    const totalWeight = quantity
-      ? medication.weight * quantity
-      : medication.weight * 1;
+    if (drone.state === "LOADING") {
+    }
 
     // Check weight limit
-    if (totalWeight > drone.weightLimit) {
+    if (medication.weight > drone.availableLimit) {
       return res.status(400).json({ message: "Weight exceeds drone limit" });
+    }
+
+    // Update drone state if weight is within or equal to limit
+    if (medication.weight < drone.availableLimit) {
+      const newAvailable = drone.availableLimit - medication.weight;
+      drone.availableLimit = newAvailable;
+      drone.state = "LOADING";
+      await drone.save();
+    } else if (medication.weight === drone.availableLimit) {
+      drone.availableLimit = 0;
+      drone.state = "LOADED";
+      await drone.save();
     }
 
     // Load medication onto the drone
     const newLoadedMedication = new LoadedMedication({
       drone_id,
       medication_id,
-      quantity,
     });
     await newLoadedMedication.save();
-
-    // Update drone state if weight is within or equal to limit
-    if (totalWeight < drone.weightLimit) {
-      drone.state = "LOADING";
-      await drone.save();
-    } else if (totalWeight === drone.weightLimit) {
-      drone.state = "LOADED";
-      await drone.save();
-    }
 
     res.status(200).json({ message: "Medication loaded successfully" });
   } catch (error) {

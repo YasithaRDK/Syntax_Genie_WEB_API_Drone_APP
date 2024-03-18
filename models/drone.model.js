@@ -17,6 +17,12 @@ const DroneSchema = new mongoose.Schema({
     max: 500,
     required: true,
   },
+  availableLimit: {
+    type: Number,
+    default: function () {
+      return this.weightLimit;
+    },
+  },
   batteryCapacity: {
     type: Number,
     required: true,

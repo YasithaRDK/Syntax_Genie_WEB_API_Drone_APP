@@ -11,10 +11,10 @@ const LoadedMedicationSchema = new mongoose.Schema({
     ref: "Medication",
     required: true,
   },
-  quantity: {
-    type: Number,
-    default: 1,
-  },
+  // quantity: {
+  //   type: Number,
+  //   default: 1,
+  // },
 });
 
 const LoadedMedication = mongoose.model(
