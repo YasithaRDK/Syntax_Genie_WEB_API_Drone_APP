@@ -6,8 +6,13 @@ const batteryLogSchema = new mongoose.Schema({
     ref: "Drone",
     required: true,
   },
-  battery_level: {
-    type: Number,
+  eventType: {
+    type: String,
+    enum: ["BATTERY_LOW"],
+    required: true,
+  },
+  description: {
+    type: String,
     required: true,
   },
   timestamp: {
@@ -16,5 +21,6 @@ const batteryLogSchema = new mongoose.Schema({
   },
 });
 
-const Battery = mongoose.model("Battery_Logs", batteryLogSchema);
-export default Battery;
+const BatteryLog = mongoose.model("BatteryLog", batteryLogSchema);
+
+export default BatteryLog;

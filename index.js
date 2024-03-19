@@ -2,9 +2,9 @@ import express from "express";
 import dotenv from "dotenv";
 import bodyParser from "body-parser";
 import connectDb from "./config/db.config.js";
-import errorHandler from "./middlewares/error.middleware.js";
 import droneRouter from "./routes/drone.routes.js";
 import medicationRouter from "./routes/medication.routes.js";
+import startBatteryCheckInterval from "./utills/droneBatterylog.js";
 
 dotenv.config();
 
@@ -19,7 +19,7 @@ app.use("/uploads", express.static("uploads"));
 app.use("/api/drones", droneRouter);
 app.use("/api/medications", medicationRouter);
 
-app.use(errorHandler);
+startBatteryCheckInterval();
 
 connectDb().then(() => {
   app.listen(port, () => {
