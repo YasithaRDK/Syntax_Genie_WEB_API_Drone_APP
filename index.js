@@ -1,6 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import bodyParser from "body-parser";
+import cors from "cors";
 import connectDb from "./config/db.config.js";
 import droneRouter from "./routes/drone.routes.js";
 import medicationRouter from "./routes/medication.routes.js";
@@ -15,6 +16,8 @@ const port = process.env.PORT;
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use("/uploads", express.static("uploads"));
+
+app.use(cors());
 
 app.use("/api/drones", droneRouter);
 app.use("/api/medications", medicationRouter);
