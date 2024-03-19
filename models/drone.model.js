@@ -20,6 +20,7 @@ const DroneSchema = new mongoose.Schema(
     },
     batteryCapacity: {
       type: Number,
+      max: 100,
       required: true,
     },
     state: {
