@@ -3,7 +3,7 @@ import BatteryLog from "../models/batteryLog.model.js";
 
 /**to check drones battery levels and create history */
 //set checking interval
-const BATTERY_CHECK_INTERVAL = 360000;
+const BATTERY_CHECK_INTERVAL = 5 * 60 * 1000;
 
 const checkBatteryLevelsAndLog = async () => {
   try {
