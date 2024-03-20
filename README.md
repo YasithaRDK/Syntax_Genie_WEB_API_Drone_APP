@@ -1,16 +1,24 @@
 # Drone App
+This  app was created using NodeJs, ExpressJS, and MongoDB.
+
+## Functionalities 
+  - able to register a drone.
+  - able to load a drone with medication items.
+  - able to check loaded medication items for a given drone.
+  - able to check available drones for loading.
+  - able to check the drone battery level for a given drone.
+
 ## Usage
+Create an env file and add the following
 
-create .env file and add 
+### .env
+  - PORT = SERVER_PORT
+  - MONGO_URI = YOUR_MONGO_URL
 
-NODE_ENV="development"
-PORT=YOUR_PORT
-MONGO_URI=YOUR_MONGODB_CONNECTION_URL
-
-### Install dependencies
-
+## Install dependencies
 npm install
 
-### Run Project
+## Run Server
+npm run server
 
-npm run dev
+
