@@ -21,4 +21,6 @@ npm install
 ## Run Server
 npm run server
 
+## Frontend Repo
+https://github.com/YasithaRDK/Syntax_Genie_Frontend_Drone_APP
 
