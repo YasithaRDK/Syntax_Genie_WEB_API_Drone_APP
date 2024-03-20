@@ -195,3 +195,13 @@ export const batteryLevel = async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 };
+
+/**Get all drones */
+export const getAllDrones = async (req, res) => {
+  try {
+    const drones = await Drone.find().select("-createdAt -updatedAt -__v");
+    res.status(200).json(drones);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
