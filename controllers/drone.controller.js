@@ -31,7 +31,9 @@ export const availableDrones = async (req, res) => {
   try {
     const drones = await Drone.find({
       state: { $in: ["LOADING", "IDLE"] },
-    }).select("-createdAt -updatedAt -__v");
+    })
+      .select("-createdAt -updatedAt -__v")
+      .sort({ state: -1, weightLimit: -1 });
     res.status(200).json(drones);
   } catch (error) {
     res.status(400).json({ message: error.message });

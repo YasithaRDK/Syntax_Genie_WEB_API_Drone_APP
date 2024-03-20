@@ -27,3 +27,15 @@ export const registerMedication = async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 };
+
+/**get all medication details */
+export const getMedicationDetails = async (req, res) => {
+  try {
+    const Medications = await Medication.find().select(
+      "-createdAt -updatedAt -__v"
+    );
+    res.status(200).json(Medications);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
